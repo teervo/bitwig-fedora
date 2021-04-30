@@ -1,6 +1,2 @@
-*.pdf
-*.ps
-*.midi
-*.mid
-*.log
-*~
+*.rpm
+*.spec
