@@ -26,6 +26,7 @@ function download_bitwig()
 # Arguments: $1: path to debian package
 function extract_deb()
 {
+    echo Extracting $(basename $1)...
     OUTPUT_DIRECTORY=rpmbuild/SOURCES
     mkdir -p $OUTPUT_DIRECTORY
     ar x --output $OUTPUT_DIRECTORY $1
@@ -65,7 +66,11 @@ function create_rpmspec()
 	echo
 
 	echo "%files"
-    tar tf rpmbuild/SOURCES/data.tar.xz | sed s/^.// | sed 's/.*/"\0"/g'
+	echo /opt/bitwig-studio
+        LIST=$(tar tf rpmbuild/SOURCES/data.tar.xz | grep /usr | sed s/^.//g)
+        for x in $LIST; do # Filter existing system directories
+            [ ! -d $x ] && echo $x;
+        done
 
 	rm $CONTROL
 }
