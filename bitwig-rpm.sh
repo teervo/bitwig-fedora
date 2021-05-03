@@ -23,6 +23,22 @@ function download_bitwig()
 	echo $DEBIAN_PKG
 }
 
+# Checks if the downloaded Debian package has already been converted to RPM
+# Arguments: $1: path to debian package
+function check_if_already_built()
+{
+    base=$(basename -s .deb $1)
+    fedora_release=$(cut -d ' ' -f 3 /etc/redhat-release)
+    arch=$(uname -m)
+    rpm=$base-1.fc$fedora_release.$arch.rpm
+
+    if [ -f $rpm ]; then
+        echo RPM package already built
+   		echo Install using sudo dnf install $rpm
+        exit 0
+    fi
+}
+
 # Arguments: $1: path to debian package
 function extract_deb()
 {
@@ -67,10 +83,10 @@ function create_rpmspec()
 
 	echo "%files"
 	echo /opt/bitwig-studio
-        LIST=$(tar tf rpmbuild/SOURCES/data.tar.xz | grep /usr | sed s/^.//g)
-        for x in $LIST; do # Filter existing system directories
-            [ ! -d $x ] && echo $x;
-        done
+    LIST=$(tar tf rpmbuild/SOURCES/data.tar.xz | grep /usr | sed s/^.//g)
+    for x in $LIST; do # Filter existing system directories
+        [ ! -d $x ] && echo $x;
+    done
 
 	rm $CONTROL
 }
@@ -88,6 +104,7 @@ function build_rpm()
 }
 
 DEBIAN_PKG=$(download_bitwig)
+check_if_already_built $DEBIAN_PKG
 extract_deb $DEBIAN_PKG
 create_rpmspec $DEBIAN_PKG > $SPEC
 build_rpm
