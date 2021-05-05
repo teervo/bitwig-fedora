@@ -13,14 +13,12 @@ function get_download_url()
 function download_bitwig()
 {
 	DOWNLOAD_URL=$(get_download_url)
-	DEBIAN_PKG=rpmbuild/SOURCES/$(basename $DOWNLOAD_URL)
+	TARGET_PATH=rpmbuild/SOURCES/$(basename $DOWNLOAD_URL)
 
-	echo "Downloading $(basename $DEBIAN_PKG)..." 1>&2
-	if [ ! -f $DEBIAN_PKG ] ; then
-	    curl --create-dirs --output $DEBIAN_PKG $DOWNLOAD_URL
-	fi
+	echo "Downloading $(basename $TARGET_PATH)..." 1>&2
+ 	curl --create-dirs --output $TARGET_PATH -C - $DOWNLOAD_URL
 
-	echo $DEBIAN_PKG
+	echo $TARGET_PATH
 }
 
 # Checks if the downloaded Debian package has already been converted to RPM
