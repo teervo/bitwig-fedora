@@ -21,14 +21,20 @@ function download_bitwig()
 	echo $TARGET_PATH
 }
 
-# Checks if the downloaded Debian package has already been converted to RPM
-# Arguments: $1: path to debian package
-function check_if_already_built()
+# Returns the filename of the created RPM
+function rpm_basename()
 {
-    base=$(basename -s .deb $1)
+    base=$(basename -s .deb $DEBIAN_PKG)
     fedora_release=$(cut -d ' ' -f 3 /etc/redhat-release)
     arch=$(uname -m)
-    rpm=$base-1.fc$fedora_release.$arch.rpm
+
+    echo $base-1.fc$fedora_release.$arch.rpm
+}
+
+# Checks if the downloaded Debian package has already been converted to RPM
+function check_if_already_built()
+{
+    rpm=$(rpm_basename)
 
     if [ -f $rpm ]; then
         echo RPM package already built
@@ -94,14 +100,20 @@ function build_rpm()
 	echo "Building RPM..."
 	QA_RPATHS=$(( 0x0001|0x0002 )) \
 		rpmbuild --buildroot $PWD/build -bb $SPEC &&
-	RPM_FILE=rpmbuild/RPMS/x86_64/*rpm &&
+	RPM_FILE=rpmbuild/RPMS/x86_64/$(rpm_basename) &&
 	mv $RPM_FILE $PWD &&
 	echo &&
 	echo RPM created. &&
 	echo Install using sudo dnf install $(basename $RPM_FILE)
 }
 
-DEBIAN_PKG=$(download_bitwig)
+if [ $# -eq 0 ]
+then
+    DEBIAN_PKG=$(download_bitwig)
+else
+	DEBIAN_PKG=$1
+fi
+
 check_if_already_built $DEBIAN_PKG
 extract_deb $DEBIAN_PKG
 create_rpmspec $DEBIAN_PKG > $SPEC
