@@ -59,6 +59,7 @@ function create_rpmspec()
 
 	echo "%global _topdir $PWD/rpmbuild"
 	echo "%global __brp_mangle_shebangs %{nil}"
+	echo "%global __brp_check_rpaths %{nil}"
 	echo
 
 	echo "Name:    bitwig-studio"
