@@ -13,12 +13,13 @@ function get_download_url()
 function download_bitwig()
 {
 	DOWNLOAD_URL=$(get_download_url)
-	TARGET_PATH=rpmbuild/SOURCES/$(basename $DOWNLOAD_URL)
+	TARGET_PATH=rpmbuild/SOURCES
 
-	echo "Downloading $(basename $TARGET_PATH)..." 1>&2
- 	curl --create-dirs --output $TARGET_PATH -C - $DOWNLOAD_URL
+	echo "Downloading $(echo $DOWNLOAD_URL | sed 's/?.*//')" 1>&2
+ 	curl --create-dirs --output-dir rpmbuild/SOURCES \
+ 		--remote-name -C - $DOWNLOAD_URL
 
-	echo $TARGET_PATH
+	echo $TARGET_PATH/$(ls -t $TARGET_PATH | head -1)
 }
 
 # Returns the filename of the created RPM
