@@ -14,12 +14,13 @@ function download_bitwig()
 {
 	DOWNLOAD_URL=$(get_download_url)
 	TARGET_PATH=rpmbuild/SOURCES
+	FILENAME=$(basename $(echo $DOWNLOAD_URL | sed 's/?.*//'))
 
 	echo "Downloading $(echo $DOWNLOAD_URL | sed 's/?.*//')" 1>&2
  	curl --create-dirs --output-dir rpmbuild/SOURCES \
  		--remote-name -C - $DOWNLOAD_URL
 
-	echo $TARGET_PATH/$(ls -t $TARGET_PATH | head -1)
+	echo $TARGET_PATH/$FILENAME
 }
 
 # Returns the filename of the created RPM
@@ -58,7 +59,7 @@ function create_rpmspec()
 	CONTROL=$(mktemp)
     tar xJf $OUTPUT_DIRECTORY/control.tar.xz ./control -O > $CONTROL
 
-	echo "%global _topdir $PWD/rpmbuild"
+	echo "%global _topdir ./rpmbuild"
 	echo "%global __brp_mangle_shebangs %{nil}"
 	echo "%global __brp_check_rpaths %{nil}"
 	echo
@@ -100,10 +101,9 @@ function create_rpmspec()
 function build_rpm()
 {
 	echo "Building RPM..."
-	QA_RPATHS=$(( 0x0001|0x0002 )) \
-		rpmbuild --buildroot $PWD/build -bb $SPEC &&
+	QA_RPATHS=$(( 0x0001|0x0002 )) rpmbuild --build-in-place -bb $SPEC &&
 	RPM_FILE=rpmbuild/RPMS/x86_64/$(rpm_basename) &&
-	mv $RPM_FILE $PWD &&
+	mv $RPM_FILE "$PWD" &&
 	echo &&
 	echo RPM created. &&
 	echo Install using sudo dnf install $(basename $RPM_FILE)
