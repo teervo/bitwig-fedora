@@ -26,38 +26,38 @@ function download_bitwig()
 # Returns the filename of the created RPM
 function rpm_basename()
 {
-    base=$(basename -s .deb $DEBIAN_PKG)
-    fedora_release=$(cut -d ' ' -f 3 /etc/redhat-release)
-    arch=$(uname -m)
+	base=$(basename -s .deb $DEBIAN_PKG)
+	fedora_release=$(cut -d ' ' -f 3 /etc/redhat-release)
+	arch=$(uname -m)
 
-    echo $base-1.fc$fedora_release.$arch.rpm
+	echo $base-1.fc$fedora_release.$arch.rpm
 }
 
 # Checks if the downloaded Debian package has already been converted to RPM
 function check_if_already_built()
 {
-    rpm=$(rpm_basename)
+	rpm=$(rpm_basename)
 
-    if [ -f $rpm ]; then
-        echo RPM package already built
-   		echo Install using sudo dnf install $rpm
-        exit 0
-    fi
+	if [ -f $rpm ]; then
+		echo RPM package already built
+		echo Install using sudo dnf install $rpm
+		exit 0
+	fi
 }
 
 # Arguments: $1: path to debian package
 function extract_deb()
 {
-    echo Extracting $(basename $1)...
-    OUTPUT_DIRECTORY=rpmbuild/SOURCES
-    mkdir -p $OUTPUT_DIRECTORY
-    ar x --output $OUTPUT_DIRECTORY $1
+	echo Extracting $(basename $1)...
+	OUTPUT_DIRECTORY=rpmbuild/SOURCES
+	mkdir -p $OUTPUT_DIRECTORY
+	ar x --output $OUTPUT_DIRECTORY $1
 }
 
 function create_rpmspec()
 {
 	CONTROL=$(mktemp)
-    tar xJf $OUTPUT_DIRECTORY/control.tar.xz ./control -O > $CONTROL
+	tar axf $OUTPUT_DIRECTORY/control.tar.zst ./control -O > $CONTROL
 
 	echo "%global _topdir ./rpmbuild"
 	echo "%global __brp_mangle_shebangs %{nil}"
@@ -72,7 +72,7 @@ function create_rpmspec()
 
 	echo "License: Proprietary"
 	echo "URL:   $(grep Homepage $CONTROL | sed 's/Homepage: //')"
-	echo "SOURCE:  rpmbuild/SOURCES/data.tar.xz"
+	echo "SOURCE:  rpmbuild/SOURCES/data.tar.zst"
 	echo
 
 	echo "%description"
@@ -80,7 +80,7 @@ function create_rpmspec()
 	echo
 
 	echo "%install"
-	echo "tar xJf %{SOURCE0} -C %{buildroot}"
+	echo "tar axf %{SOURCE0} -C %{buildroot}"
 	echo "find %{buildroot} -name '*.css' -exec chmod 0644 {} \;"
 	echo "find %{buildroot} -name '*.html' -exec chmod 0644 {} \;"
 	echo "find %{buildroot} -name '*.js' -exec chmod 0644 {} \;"
@@ -90,10 +90,10 @@ function create_rpmspec()
 
 	echo "%files"
 	echo /opt/bitwig-studio
-    LIST=$(tar tf rpmbuild/SOURCES/data.tar.xz | grep /usr | sed s/^.//g)
-    for x in $LIST; do # Filter existing system directories
-        [ ! -d $x ] && echo $x;
-    done
+	LIST=$(tar tf rpmbuild/SOURCES/data.tar.zst | grep /usr | sed s/^.//g)
+	for x in $LIST; do # Filter existing system directories
+		[ ! -d $x ] && echo $x;
+	done
 
 	rm $CONTROL
 }
@@ -111,7 +111,7 @@ function build_rpm()
 
 if [ $# -eq 0 ]
 then
-    DEBIAN_PKG=$(download_bitwig)
+	DEBIAN_PKG=$(download_bitwig)
 else
 	DEBIAN_PKG=$1
 fi
