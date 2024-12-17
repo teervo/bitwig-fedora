@@ -62,6 +62,8 @@ function create_rpmspec()
 	echo "%global _topdir ./rpmbuild"
 	echo "%global __brp_mangle_shebangs %{nil}"
 	echo "%global __brp_check_rpaths %{nil}"
+	echo "%global debug_package %{nil}"
+	echo "%undefine _missing_build_ids_terminate_build"
 	echo
 
 	echo "Name:    bitwig-studio"
