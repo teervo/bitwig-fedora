@@ -21,7 +21,7 @@ Install using sudo dnf install bitwig-studio-4.4.8-1.fc37.x86_64.rpm
 
 If you already have downloaded the .deb package (e.g. for a beta pre-release), supply the path as the first argument:
 ```
-$ ./bitwig.rpm.sh ~/Downloads/bitwig-studio-9.1beta1.deb
+$ ./bitwig-rpm.sh ~/Downloads/bitwig-studio-9.1beta1.deb
 Extracting bitwig-studio-9.1beta1.deb...
 Building RPM...
 [...]
