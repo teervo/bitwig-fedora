@@ -8,7 +8,7 @@ function get_download_url()
 		echo "Determining latest stable version..." 1>&2
 		RELATIVE_URL=$(curl --silent -L bitwig.com | grep -Eo 'dl[^"]*installer_linux')
 	else
-		echo "Finding version $1" 1>&2
+		echo "Finding version $1..." 1>&2
 		RELATIVE_URL=dl/Bitwig%20Studio/$1/installer_linux
 	fi
 	FULL_URL=https://www.bitwig.com/$RELATIVE_URL
@@ -62,6 +62,7 @@ function extract_deb()
 {
 	echo Extracting $(basename $1)... 1>&2
 	OUTPUT_DIRECTORY=rpmbuild/SOURCES
+	rm -rf $OUTPUT_DIRECTORY
 	mkdir -p $OUTPUT_DIRECTORY
 	ar x --output $OUTPUT_DIRECTORY $1
 }
