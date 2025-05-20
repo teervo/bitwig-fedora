@@ -3,8 +3,14 @@ SPEC=bitwig-studio.spec
 
 function get_download_url()
 {
-	echo "Determining latest stable version..." 1>&2
-	RELATIVE_URL=$(curl --silent -L bitwig.com | grep -Eo 'dl[^"]*installer_linux')
+	if [ $# -eq 0 ]
+	then
+		echo "Determining latest stable version..." 1>&2
+		RELATIVE_URL=$(curl --silent -L bitwig.com | grep -Eo 'dl[^"]*installer_linux')
+	else
+		echo "Finding version $1..." 1>&2
+		RELATIVE_URL=dl/Bitwig%20Studio/$1/installer_linux
+	fi
 	FULL_URL=https://www.bitwig.com/$RELATIVE_URL
 	curl -L --head -w '%{url_effective}' $FULL_URL 2>/dev/null | tail -n1
 }
@@ -12,7 +18,12 @@ function get_download_url()
 # Returns the path to the downloaded archive
 function download_bitwig()
 {
-	DOWNLOAD_URL=$(get_download_url)
+	if [ $# -eq 0 ]
+	then
+		DOWNLOAD_URL=$(get_download_url)
+	else
+		DOWNLOAD_URL=$(get_download_url $1)
+	fi
 	TARGET_PATH=rpmbuild/SOURCES
 	FILENAME=$(basename $(echo $DOWNLOAD_URL | sed 's/?.*//'))
 
@@ -39,8 +50,9 @@ function check_if_already_built()
 	rpm=$(rpm_basename)
 
 	if [ -f $rpm ]; then
-		echo RPM package already built
-		echo Install using sudo dnf install $rpm
+		echo RPM package already built 1>&2
+		echo -n "Install using sudo dnf install " 1>&2
+		echo $rpm
 		exit 0
 	fi
 }
@@ -48,16 +60,24 @@ function check_if_already_built()
 # Arguments: $1: path to debian package
 function extract_deb()
 {
-	echo Extracting $(basename $1)...
+	echo Extracting $(basename $1)... 1>&2
 	OUTPUT_DIRECTORY=rpmbuild/SOURCES
+	rm -rf $OUTPUT_DIRECTORY/{*.xz,*.zst}
 	mkdir -p $OUTPUT_DIRECTORY
 	ar x --output $OUTPUT_DIRECTORY $1
 }
 
 function create_rpmspec()
 {
+	TARBALL_CONTROL=control.tar.xz
+	TARBALL_DATA=data.tar.xz
+	if [ ! -f $OUTPUT_DIRECTORY/$TARBALL_CONTROL ]; then
+		TARBALL_CONTROL=control.tar.zst
+		TARBALL_DATA=data.tar.zst
+	fi
+
 	CONTROL=$(mktemp)
-	tar axf $OUTPUT_DIRECTORY/control.tar.zst ./control -O > $CONTROL
+	tar axf $OUTPUT_DIRECTORY/$TARBALL_CONTROL ./control -O > $CONTROL
 
 	echo "%global _topdir ./rpmbuild"
 	echo "%global __brp_mangle_shebangs %{nil}"
@@ -74,7 +94,7 @@ function create_rpmspec()
 
 	echo "License: Proprietary"
 	echo "URL:   $(grep Homepage $CONTROL | sed 's/Homepage: //')"
-	echo "SOURCE:  rpmbuild/SOURCES/data.tar.zst"
+	echo "SOURCE:  rpmbuild/SOURCES/$TARBALL_DATA"
 	echo
 
 	echo "%description"
@@ -92,7 +112,7 @@ function create_rpmspec()
 
 	echo "%files"
 	echo /opt/bitwig-studio
-	LIST=$(tar tf rpmbuild/SOURCES/data.tar.zst | grep /usr | sed s/^.//g)
+	LIST=$(tar tf rpmbuild/SOURCES/$TARBALL_DATA | grep /usr | sed s/^.//g)
 	for x in $LIST; do # Filter existing system directories
 		[ ! -d $x ] && echo $x;
 	done
@@ -102,18 +122,22 @@ function create_rpmspec()
 
 function build_rpm()
 {
-	echo "Building RPM..."
+	echo "Building RPM..." 1>&2
 	QA_RPATHS=$(( 0x0001|0x0002 )) rpmbuild --build-in-place -bb $SPEC &&
 	RPM_FILE=rpmbuild/RPMS/x86_64/$(rpm_basename) &&
 	mv $RPM_FILE "$PWD" &&
-	echo &&
-	echo RPM created. &&
-	echo Install using sudo dnf install $(basename $RPM_FILE)
+	echo  1>&2 &&
+	echo RPM created. 1>&2 &&
+	echo -n "Install using sudo dnf install " 1>&2 &&
+	echo $(basename $RPM_FILE)
 }
 
 if [ $# -eq 0 ]
 then
 	DEBIAN_PKG=$(download_bitwig)
+elif [[ $1 =~ [0-9]+\.[0-9]+\.[0-9]+ ]]
+then
+	DEBIAN_PKG=$(download_bitwig $1)
 else
 	DEBIAN_PKG=$1
 fi
