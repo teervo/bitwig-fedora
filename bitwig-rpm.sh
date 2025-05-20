@@ -62,7 +62,7 @@ function extract_deb()
 {
 	echo Extracting $(basename $1)... 1>&2
 	OUTPUT_DIRECTORY=rpmbuild/SOURCES
-	rm -rf $OUTPUT_DIRECTORY
+	rm -rf $OUTPUT_DIRECTORY/{*.xz,*.zst}
 	mkdir -p $OUTPUT_DIRECTORY
 	ar x --output $OUTPUT_DIRECTORY $1
 }
