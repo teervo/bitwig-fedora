@@ -142,7 +142,7 @@ function build_rpm()
 {
 	echo "Building RPM..." 1>&2
 	QA_RPATHS=$(( 0x0001|0x0002 )) rpmbuild --build-in-place -bb $SPEC &&
-	RPM_FILE=rpmbuild/RPMS/x86_64/$(rpm_basename) &&
+	RPM_FILE="$PWD/rpmbuild/RPMS/x86_64/"$(rpm_basename) &&
 	mv $RPM_FILE "$PWD" &&
 	echo 1>&2 &&
 	echo RPM created. 1>&2 &&
