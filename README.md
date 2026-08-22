@@ -1,42 +1,40 @@
 ![showcase](https://github.com/user-attachments/assets/af930e0a-a710-4c26-828e-6daea7854654)
 
-## installation:
-
-To auto-install the latest stable version, run the one command below in terminal:
+#### auto-installation:
 ```sh
 curl -s https://raw.githubusercontent.com/teervo/bitwig-fedora/main/bitwig-rpm.sh | bash -s --
 ```
-
-Otherwise, to store & install locally:
+#### manual installation:
 ```sh
 wget https://raw.githubusercontent.com/teervo/bitwig-fedora/main/bitwig-rpm.sh &&
 chmod +x bitwig-rpm.sh && ./bitwig-rpm.sh
 ```
 
-#### optional flags:
+> [!NOTE]
+> The script always defaults to the <b>latest stable version</b>.
 
-Add the suffixes below at the very end of the commands above.
+#### optional arguments:
 
-For example, to install:
+Both installation methods accept additional arguments at the end, for example:
 - the latest beta: `.../teervo/bitwig-fedora/main/bitwig-rpm.sh | bash -- --beta`
 - an existing .deb package: `./bitwig-rpm.sh ~/Downloads/bitwig-studio-6.0.11.deb`
 - an older version: `./bitwig-rpm.sh 5.1.1`
 
-### aliases:
+#### aliases:
 
-You can manage easier future installations via aliases in `.bashrc`.
+You can manage easier future installations via aliases in `.bashrc` by running the commands below only once:
 
-Install straight from the latest Github update, run in Terminal:
+##### alias for auto-installation:
 ```sh
 echo 'alias bitwig-update="curl -s https://raw.githubusercontent.com/teervo/bitwig-fedora/main/bitwig-rpm.sh | bash -s --"' >> $HOME/.bashrc
 ```
-Install from a locally stored download (edit the file path), run in Terminal:
+##### alias for manual installation (change the script's path!):
 ```sh
 echo 'alias bitwig-update="/path/to/bitwig-rpm.sh"' >> $HOME/.bashrc
 ```
 
-And then simply use as (for example):
+Then simply use as:
 ```sh
-user@linux:~$ bitwig-update --beta
+user@linux:~$ bitwig-update
 ```
-
+<sup>NOTE: Optional arguments still work with aliases!
