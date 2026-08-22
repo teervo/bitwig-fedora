@@ -1,61 +1,42 @@
-# bitwig-fedora
-Downloads the latest Bitwig Studio and creates an RPM for it.
+![showcase](https://github.com/user-attachments/assets/af930e0a-a710-4c26-828e-6daea7854654)
 
-Only depends on rpm-build, not on Debian tools.
+## installation:
+
+To auto-install the latest stable version, run the one command below in terminal:
 ```sh
-$ sudo dnf install rpm-build
+curl -s https://raw.githubusercontent.com/teervo/bitwig-fedora/main/bitwig-rpm.sh | bash -s --
 ```
 
-Bitwig depends on the v8 implementation of JPEG, i.e. libjpeg.so.8. The
-implementation shipping with Fedora is v6, so you need to first enable an additional COPR repository by running
+Otherwise, to store & install locally:
 ```sh
-$ sudo dnf copr enable aflyhorse/libjpeg
+wget https://raw.githubusercontent.com/teervo/bitwig-fedora/main/bitwig-rpm.sh &&
+chmod +x bitwig-rpm.sh && ./bitwig-rpm.sh
 ```
 
-To create the RPM package for the latest stable release, run:
+#### optional flags:
+
+Add the suffixes below at the very end of the commands above.
+
+For example, to install:
+- the latest beta: `.../teervo/bitwig-fedora/main/bitwig-rpm.sh | bash -- --beta`
+- an existing .deb package: `./bitwig-rpm.sh ~/Downloads/bitwig-studio-6.0.11.deb`
+- an older version: `./bitwig-rpm.sh 5.1.1`
+
+### aliases:
+
+You can manage easier future installations via aliases in `.bashrc`.
+
+Install straight from the latest Github update, run in Terminal:
 ```sh
-$ ./bitwig-rpm.sh
-Determining latest stable version...
-Downloading Bitwig Studio 6.0.11...
-[...]
-RPM created.
-Install using sudo dnf install bitwig-studio-6.0.11.fc44.x86_64.rpm
+echo 'alias bitwig-update="curl -s https://raw.githubusercontent.com/teervo/bitwig-fedora/main/bitwig-rpm.sh | bash -s --"' >> $HOME/.bashrc
+```
+Install from a locally stored download (edit the file path), run in Terminal:
+```sh
+echo 'alias bitwig-update="/path/to/bitwig-rpm.sh"' >> $HOME/.bashrc
 ```
 
-If you want to download the latest beta release, run:
+And then simply use as (for example):
 ```sh
-$ ./bitwig-rpm.sh --beta
-Determining latest beta line...
-Determining latest beta version...
-Downloading Bitwig Studio 6.1-beta-4...
-[...]
-RPM created.
-Install using sudo dnf install bitwig-studio-6.1-beta-4.fc44.x86_64.rpm
+user@linux:~$ bitwig-update --beta
 ```
 
-If you want to download a specific version, supply the version number to download as the first argument:
-```sh
-$ ./bitwig-rpm.sh 4.4.10
-Finding version 4.4.10...
-Downloading https://downloads.bitwig.com/4.4.10/bitwig-studio-4.4.10.deb
-[...]
-RPM created.
-Install using sudo dnf install bitwig-studio-4.4.10-1.fc44.x86_64.rpm
-```
-
-If you already have downloaded the .deb package (e.g. for a beta pre-release), supply the path as the first argument:
-```sh
-$ ./bitwig-rpm.sh ~/Downloads/bitwig-studio-6.1beta1.deb
-Extracting bitwig-studio-9.1beta1.deb...
-Building RPM...
-[...]
-RPM created.
-Install using sudo dnf install bitwig-studio-6.1beta1-1.fc44.x86_64.rpm
-```
-
-Automatically install the created RPM package by using command substitution to execute the script and pass the name of the RPM to a `dnf install` command
-```sh
-$ sudo dnf install $(./bitwig-rpm.sh) -y
-$ sudo dnf install $(./bitwig-rpm.sh 4.4.10) -y
-$ sudo dnf install $(./bitwig-rpm.sh ~/Downloads/bitwig-studio-9.1beta1.deb) -y
-```

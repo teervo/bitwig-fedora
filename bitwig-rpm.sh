@@ -1,7 +1,32 @@
 #!/usr/bin/env bash
 SPEC=bitwig-studio.spec
 
-function get_download_url()
+BOLD="\e[1m"
+BLUE="\e[34m"
+BLUE_BG="\e[48;5;20m"
+ESC_END="\e[0m"
+
+sudo -v
+while sleep 60; do sudo -n true; done &
+trap 'kill $!' EXIT
+
+tput clear
+echo -e "${BLUE_BG} BITWIG-FEDORA ${ESC_END}"
+echo -e "${BOLD}by teervo & yioannides${ESC_END}\n"
+sleep 1
+
+check_dependencies()
+{
+	echo -e "${BOLD}Checking dependencies...${ESC_END}\n" 1>&2
+	if ! dnf list --installed | grep -q "rpm-build"; then
+		sudo dnf install rpm-build -y
+	fi
+	if ! dnf repo list | grep -q "aflyhorse:libjpeg"; then
+		sudo dnf copr enable aflyhorse/libjpeg -y
+	fi
+}
+
+get_download_url()
 {
 	if [ $# -eq 0 ]; then
 		echo "Determining latest stable version..." 1>&2
@@ -17,7 +42,7 @@ function get_download_url()
 		done
 
 		echo "Determining latest beta version..." 1>&2
-		N=1
+		POINT=1
 		while curl -s -o /dev/null -L --head -w '%{http_code}' "https://www.bitwig.com/dl/Bitwig%20Studio/${MAJOR}.${MINOR}%20Beta%20$((POINT+1))/installer_linux" | grep -q 200; do
 			POINT=$((POINT+1))
 		done
@@ -30,7 +55,7 @@ function get_download_url()
 	curl -L --head -w '%{url_effective}' $FULL_URL 2>/dev/null | tail -n1
 }
 
-function download_bitwig()
+download_bitwig()
 {
 	if [ $# -eq 0 ]; then
 		DOWNLOAD_URL=$(get_download_url)
@@ -42,44 +67,43 @@ function download_bitwig()
 	FILENAME=$(basename $(echo $DOWNLOAD_URL | sed 's/?.*//'))
 	VERSION=$(echo "$DOWNLOAD_URL" | grep -oP 'bitwig-studio-\K.*(?=\.deb)')
 	
-	echo -e "Downloading \e[1mBitwig Studio $(echo "${VERSION}\e[0m...\n${DOWNLOAD_URL}" | sed 's/?.*//')" 1>&2
+	echo
+	echo -e "\nDownloading ${BOLD}Bitwig Studio $(echo "${VERSION}${ESC_END}...\n${DOWNLOAD_URL}" | sed 's/?.*//')" 1>&2
 	curl --create-dirs --output-dir $TARGET_PATH \
 		--remote-name -C - $DOWNLOAD_URL
 
 	echo $TARGET_PATH/$FILENAME
 }
 
-function rpm_basename()
+rpm_basename()
 {
-	base=$(basename -s .deb $DEBIAN_PKG)
+	base=$(basename $DEBIAN_PKG .deb)
 	fedora_release=$(cut -d ' ' -f 3 /etc/redhat-release)
 	arch=$(uname -m)
 
-	echo $base-1.fc$fedora_release.$arch.rpm
+	echo $base.fc$fedora_release.$arch.rpm
 }
 
-function check_if_already_built()
+check_if_already_built()
 {
-	rpm=$(rpm_basename)
-
-	if [ -f $rpm ]; then
-		echo RPM package already built 1>&2
-		echo -n "Install using sudo dnf install " 1>&2
-		echo $rpm
+	RPM=$(rpm_basename)
+	if [ -f $RPM ]; then
+		echo -e "${BLUE}RPM package already built! \n${ESC_END}" 1>&2
+		install_rpm
 		exit 0
 	fi
 }
 
-function extract_deb()
+extract_deb()
 {
-	echo Extracting $(basename $1)... 1>&2
+	echo -e "\nExtracting ${BOLD}$(basename $1)...${ESC_END}\n" 1>&2
 	OUTPUT_DIRECTORY=rpmbuild/SOURCES
 	rm -rf $OUTPUT_DIRECTORY/{*.xz,*.zst}
 	mkdir -p $OUTPUT_DIRECTORY
 	ar x --output $OUTPUT_DIRECTORY $1
 }
 
-function create_rpmspec()
+create_rpmspec()
 {
 	TARBALL_CONTROL=control.tar.xz
 	TARBALL_DATA=data.tar.xz
@@ -138,16 +162,23 @@ function create_rpmspec()
 	rm $CONTROL
 }
 
-function build_rpm()
+build_rpm()
 {
-	echo "Building RPM..." 1>&2
-	QA_RPATHS=$(( 0x0001|0x0002 )) rpmbuild --build-in-place -bb $SPEC &&
-	RPM_FILE="$PWD/rpmbuild/RPMS/x86_64/"$(rpm_basename) &&
-	mv $RPM_FILE "$PWD" &&
-	echo 1>&2 &&
-	echo RPM created. 1>&2 &&
-	echo -n "Install using sudo dnf install " 1>&2 &&
-	echo $(basename $RPM_FILE)
+	echo -e "\n${BOLD}Building RPM...${ESC_END}\n" 1>&2
+	QA_RPATHS=$(( 0x0001|0x0002 )) rpmbuild --build-in-place -bb $SPEC || return 1
+	RPM_FILE=$(find rpmbuild/RPMS/x86_64 -name '*.rpm' -type f -print -quit) || return 1
+	mv "$RPM_FILE" . || return 1
+	RPM_FILE=$(basename "$RPM_FILE")
+	rm -rf rpmbuild bitwig-studio.spec
+	echo
+	echo -e "RPM created: ${BOLD}$RPM_FILE${ESC_END}\n" >&2
+}
+
+install_rpm()
+{
+	echo -e "\n${BOLD}Installing RPM...${ESC_END}\n" 1>&2
+	sudo dnf install -y "$RPM_FILE"
+	echo -e "\n${BOLD}Installation complete! ${ESC_END}\n" 1>&2
 }
 
 if [[ $1 =~ ".deb" ]]; then
@@ -158,7 +189,9 @@ elif [ "$1" == "--beta" ] || [[ $1 =~ [0-9]+\.[0-9]+\.[0-9]+ ]]; then
 	DEBIAN_PKG=$(download_bitwig "$1")
 fi
 
+check_dependencies
 check_if_already_built $DEBIAN_PKG
 extract_deb $DEBIAN_PKG
 create_rpmspec $DEBIAN_PKG > $SPEC
 build_rpm
+install_rpm
