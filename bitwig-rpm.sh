@@ -3,7 +3,7 @@ SPEC=bitwig-studio.spec
 
 BOLD="\e[1m"
 BLUE="\e[34m"
-BLUE_BG="\e[48;5;20m"
+BLUE_BG="\e[48;5;20m\e[38;5;255m\e[1m"
 ESC_END="\e[0m"
 
 sudo -v
