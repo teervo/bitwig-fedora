@@ -16,7 +16,7 @@ chmod +x bitwig-rpm.sh && ./bitwig-rpm.sh
 #### optional arguments:
 
 Both installation methods accept additional arguments at the end, for example:
-- the latest beta: `.../teervo/bitwig-fedora/main/bitwig-rpm.sh | bash -- --beta`
+- the latest beta: `.../teervo/bitwig-fedora/main/bitwig-rpm.sh | bash -s -- --beta`
 - an existing .deb package: `./bitwig-rpm.sh ~/Downloads/bitwig-studio-6.0.11.deb`
 - an older version: `./bitwig-rpm.sh 5.1.1`
 
